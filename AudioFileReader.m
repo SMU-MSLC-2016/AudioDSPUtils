@@ -1,7 +1,7 @@
 //
 //  AudioFileReader.m
 //  Novocaine
-//
+//  Manipulated by Eric Larson 2015
 // Copyright (c) 2012 Alex Wiltschko
 // 
 // Permission is hereby granted, free of charge, to any person
@@ -28,9 +28,7 @@
 #import "AudioFileReader.h"
 
 @interface AudioFileReader ()
-{
-    RingBuffer *ringBuffer;
-}
+
 
 @property AudioStreamBasicDescription outputFormat;
 @property ExtAudioFileRef inputFile;
@@ -41,7 +39,7 @@
 @property UInt32 desiredPrebufferedSamples;
 @property SInt64 currentFileTime;
 @property dispatch_source_t callbackTimer;
-
+@property CircularBuffer *ringBuffer;
 
 - (void)bufferNewAudio;
 
@@ -83,9 +81,9 @@
     free(self.outputBuffer);
     free(self.holdingBuffer);
     
-    delete ringBuffer;
+//    [ringBuffer dealloc];
     
-    [super dealloc];
+//    [super dealloc];
 }
 
 
@@ -101,8 +99,9 @@
         
         // Open a reference to the audio file
         self.audioFileURL = urlToAudioFile;
-        CFURLRef audioFileRef = (CFURLRef)self.audioFileURL;
-        CheckError(ExtAudioFileOpenURL(audioFileRef, &_inputFile), "Opening file URL (ExtAudioFileOpenURL)");
+        CFURLRef audioFileRef = (__bridge CFURLRef)self.audioFileURL;
+        //CheckError(ExtAudioFileOpenURL(audioFileRef, &_inputFile), "Opening file URL (ExtAudioFileOpenURL)");
+        ExtAudioFileOpenURL(audioFileRef, &_inputFile);
 
         
         // Set a few defaults and presets
@@ -135,7 +134,9 @@
         
         
         // Allocate a ring buffer (this is what's going to buffer our audio)
-        ringBuffer = new RingBuffer(self.outputBufferSize, self.numChannels);
+        
+        self.ringBuffer = [[CircularBuffer alloc]initWithNumChannels:self.numChannels andBufferSize:self.outputBufferSize];
+        //new RingBuffer(self.outputBufferSize, self.numChannels);
         
         
         // Fill up the buffers, so we're ready to play immediately
@@ -147,13 +148,14 @@
 
 - (void)clearBuffer
 {
-    ringBuffer->Clear();
+    [self.ringBuffer Clear];
+    //ringBuffer->Clear();
 }
 
 - (void)bufferNewAudio
 {
-    
-    if (ringBuffer->NumUnreadFrames() > self.desiredPrebufferedSamples)
+    //ringBuffer->NumUnreadFrames()
+    if (self.ringBuffer.numUnreadFrames > self.desiredPrebufferedSamples)
         return;
     
     memset(self.outputBuffer, 0, sizeof(float)*self.desiredPrebufferedSamples);
@@ -178,7 +180,8 @@
     self.currentFileTime = (float)frameOffset / self.samplingRate;
     
     // Add the new audio to the ring buffer
-    ringBuffer->AddNewInterleavedFloatData(self.outputBuffer, framesRead, self.numChannels);
+    [self.ringBuffer addNewInterleavedFloatData:self.outputBuffer withNumSamples:framesRead withNumChannels:self.numChannels];
+    //ringBuffer->AddNewInterleavedFloatData(self.outputBuffer, framesRead, self.numChannels);
     
     if ((self.currentFileTime - self.duration) < 0.01 && framesRead == 0) {
         // modified to allow for auto-stopping. //
@@ -186,7 +189,7 @@
         // not playing and not paused, on the next frame. Otherwise, the sound clip's final buffer is not played. //
 //        self.currentTime = 0.0f;
         [self stop];
-        ringBuffer->Clear();
+        [self.ringBuffer Clear];
     }
     
     
@@ -194,7 +197,7 @@
 
 - (float)getCurrentTime
 {
-    return self.currentFileTime - ringBuffer->NumUnreadFrames()/self.samplingRate;
+    return self.currentFileTime - self.ringBuffer.numUnreadFrames/self.samplingRate;
 }
 
 
@@ -262,7 +265,8 @@
 
 - (void)retrieveFreshAudio:(float *)buffer numFrames:(UInt32)thisNumFrames numChannels:(UInt32)thisNumChannels
 {
-    ringBuffer->FetchInterleavedData(buffer, thisNumFrames, thisNumChannels);
+    //ringBuffer->FetchInterleavedData(buffer, thisNumFrames, thisNumChannels);
+    [self.ringBuffer fetchData:buffer withNumSamples:thisNumFrames];
 }
 
 
@@ -288,7 +292,8 @@
     // Release the dispatch timer because it holds a reference to this class instance
     [self pause];
     if (self.callbackTimer) {
-        dispatch_release(self.callbackTimer);
+        //dispatch_release(self.callbackTimer);
+        self.callbackTimer = nil;
     }
 }
 
