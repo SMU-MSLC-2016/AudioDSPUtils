@@ -22,7 +22,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #import <Foundation/Foundation.h>
-#import "RingBuffer.h"
+#import "CircularBuffer.h"
 #import "Novocaine.h"
 
 
