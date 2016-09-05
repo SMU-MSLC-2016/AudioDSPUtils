@@ -266,7 +266,13 @@
 - (void)retrieveFreshAudio:(float *)buffer numFrames:(UInt32)thisNumFrames numChannels:(UInt32)thisNumChannels
 {
     //ringBuffer->FetchInterleavedData(buffer, thisNumFrames, thisNumChannels);
-    [self.ringBuffer fetchData:buffer withNumSamples:thisNumFrames];
+    if(thisNumChannels==1){
+        [self.ringBuffer fetchData:buffer withNumSamples:thisNumFrames];
+    }
+    else{
+        [self.ringBuffer fetchInterleavedData:buffer withNumSamples:thisNumFrames];
+    }
+    
 }
 
 
