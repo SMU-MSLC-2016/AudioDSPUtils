@@ -25,7 +25,7 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <Accelerate/Accelerate.h>
-#import <AVFoundation/AVAudioSession.h>
+//#import <AVFoundation/AVAudioSession.h>
 #import <Foundation/Foundation.h>
 
 #include <Block.h>
