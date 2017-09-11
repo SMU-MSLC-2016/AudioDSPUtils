@@ -43,7 +43,7 @@
 #import "TargetConditionals.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import <Accelerate/Accelerate.h>
-#import <AVFoundation/AVAudioSession.h>
+//#import <AVFoundation/AVAudioSession.h>
 #import <AVFoundation/AVCaptureDevice.h>
 #import <pthread.h>
 
